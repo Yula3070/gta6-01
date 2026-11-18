@@ -1,0 +1,100 @@
+/* Solara Bay HUD: dark glass panels, amber accent, clean system type.
+   Inspired by shadcn-style tokens (rounded panels, subtle borders, blur). */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0b1026; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #eef1f5; }
+#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hidden { display: none !important; }
+
+.panel {
+  background: rgba(10, 14, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  padding: 10px 12px;
+}
+.btn {
+  font: inherit; font-weight: 600; color: #eef1f5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px; padding: 10px 18px; cursor: pointer;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.16); }
+.btn.primary { background: #f2c200; color: #1a1400; border-color: #ffd700; }
+.btn.primary:hover { background: #ffd700; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+#topleft { position: absolute; top: 14px; left: 14px; min-width: 240px; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.bar-label { font-size: 10px; letter-spacing: 0.12em; color: #8b93a3; width: 46px; }
+.bar { flex: 1; height: 10px; background: rgba(255, 255, 255, 0.12); border-radius: 6px; overflow: hidden; }
+.bar.thin { height: 6px; }
+.fill { height: 100%; width: 100%; border-radius: 6px; transition: width 0.15s linear; background: #2ecc71; }
+.fill.armor { background: #5dade2; }
+.fill.busted { background: #e74c3c; }
+.fill.tide { background: #2e86c1; }
+#money { font-size: 22px; font-weight: 800; color: #7ee2a0; margin-top: 4px; }
+#shells { font-size: 13px; font-weight: 700; color: #ffd700; margin-top: 2px; }
+
+#topright { position: absolute; top: 14px; right: 14px; text-align: right; min-width: 200px; }
+#stars { font-size: 22px; letter-spacing: 3px; color: rgba(255, 255, 255, 0.25); line-height: 1; }
+#stars span.lit { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.8); }
+#stars.flash { animation: starflash 0.2s steps(2) infinite; }
+@keyframes starflash { 50% { opacity: 0.4; } }
+#clock-row { font-size: 20px; font-weight: 700; margin-top: 6px; }
+#tide-row { margin-top: 4px; font-size: 11px; color: #aeb6c2; }
+#tide-label.low { color: #7ee2a0; font-weight: 700; }
+
+#objective-wrap { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); max-width: 46vw; text-align: center; font-weight: 600; font-size: 14px; }
+#mission-timer { display: block; font-size: 18px; font-weight: 800; color: #ffd700; }
+
+#minimap-wrap { position: absolute; left: 14px; bottom: 14px; padding: 6px; }
+#minimap { display: block; border-radius: 8px; }
+#minimap-label { text-align: center; font-size: 10px; letter-spacing: 0.2em; color: #8b93a3; margin-top: 4px; }
+
+#bottomright { position: absolute; right: 14px; bottom: 14px; text-align: right; min-width: 150px; }
+#speed { font-size: 26px; font-weight: 800; }
+#carname { font-size: 11px; letter-spacing: 0.15em; color: #8b93a3; }
+#weapon-name { font-size: 13px; font-weight: 700; margin-top: 4px; }
+#ammo { font-size: 15px; color: #ffd700; font-weight: 700; }
+
+#prompt {
+  position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%);
+  background: rgba(10, 14, 22, 0.8); border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 8px; padding: 8px 14px; font-weight: 700;
+}
+#dialogue { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); width: min(560px, 80vw); }
+/* A staged shot may lift the dialogue into the sky so it never covers the road. */
+#dialogue.top { top: 86px; bottom: auto; }
+#dialogue-speaker { font-size: 11px; letter-spacing: 0.15em; color: #ffd700; font-weight: 800; margin-bottom: 4px; }
+#dialogue-text { font-size: 15px; line-height: 1.45; }
+#toast {
+  position: absolute; left: 50%; bottom: 190px; transform: translateX(-50%);
+  background: rgba(10, 14, 22, 0.85); border: 1px solid rgba(126, 226, 160, 0.6);
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; color: #7ee2a0;
+}
+#crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 300; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 4px #000; }
+#vignette { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s; box-shadow: inset 0 0 120px 40px rgba(200, 0, 0, 0.55); }
+#controls-hint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255, 255, 255, 0.55); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+
+.screen { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; }
+#title-screen { background: linear-gradient(180deg, rgba(5, 8, 18, 0.82) 0%, rgba(5, 8, 18, 0.25) 40%, rgba(5, 8, 18, 0.25) 60%, rgba(5, 8, 18, 0.88) 100%); }
+.title-inner { text-align: center; max-width: 640px; padding: 20px; }
+.title-kicker { letter-spacing: 0.35em; font-size: 12px; color: #ffd700; font-weight: 800; }
+.title-inner h1 { font-size: 92px; line-height: 0.9; margin: 12px 0; letter-spacing: 0.04em; color: #fff; text-shadow: 0 4px 30px rgba(255, 170, 60, 0.45), 0 2px 0 rgba(0, 0, 0, 0.4); }
+.title-story { font-size: 16px; line-height: 1.55; color: #dfe6ee; text-shadow: 0 1px 3px #000; }
+.title-buttons { display: flex; gap: 10px; justify-content: center; margin: 18px 0 10px; flex-wrap: wrap; }
+.title-buttons .btn { font-size: 16px; padding: 12px 22px; }
+#continue-info { font-size: 13px; color: #8b93a3; min-height: 18px; }
+#howto { margin-top: 12px; text-align: left; font-size: 13px; line-height: 1.6; color: #cfd6df; }
+.title-foot { font-size: 12px; color: #8b93a3; margin-top: 16px; }
+#pause-screen, #failed-screen, #over-screen { background: rgba(5, 8, 18, 0.6); }
+.menu-card { display: flex; flex-direction: column; gap: 10px; min-width: 320px; text-align: center; }
+.menu-card h2 { margin: 4px 0 8px; letter-spacing: 0.2em; }
+.menu-card p { margin: 0 0 6px; color: #cfd6df; }
+#settings { display: flex; flex-direction: column; gap: 8px; text-align: left; font-size: 13px; margin-top: 6px; }
+#settings label { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+#settings input[type="range"] { width: 150px; }
+#over-title { color: #ff5a3c; }

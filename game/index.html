@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solara Bay — an open-world crime game</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+<p id="status" class="sr-only" aria-live="polite"></p>
+
+<div id="hud" class="hidden">
+  <div id="topleft" class="panel">
+    <div class="bar-row"><span class="bar-label">HEALTH</span><div class="bar"><div id="health-fill" class="fill"></div></div></div>
+    <div class="bar-row"><span class="bar-label">ARMOR</span><div class="bar"><div id="armor-fill" class="fill armor"></div></div></div>
+    <div id="money">$250</div>
+    <div id="shells">🐚 0/12</div>
+  </div>
+
+  <div id="topright" class="panel">
+    <div id="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+    <div class="bar thin"><div id="busted-fill" class="fill busted"></div></div>
+    <div id="clock-row"><span id="daynight">☀️</span><span id="clock">16:00</span></div>
+    <div id="tide-row"><span id="tide-label">HIGH TIDE 0:00</span><div class="bar thin"><div id="tide-fill" class="fill tide"></div></div></div>
+  </div>
+
+  <div id="objective-wrap" class="panel">
+    <span id="objective">Free roam — press M for the next mission</span>
+    <span id="mission-timer"></span>
+  </div>
+
+  <div id="minimap-wrap" class="panel">
+    <canvas id="minimap" width="200" height="200"></canvas>
+    <div id="minimap-label">SOLARA BAY</div>
+  </div>
+
+  <div id="bottomright" class="panel">
+    <div id="speed"></div>
+    <div id="carname"></div>
+    <div id="weapon-name">FISTS</div>
+    <div id="ammo"></div>
+  </div>
+
+  <div id="prompt" class="hidden"></div>
+  <div id="dialogue" class="panel hidden"><div id="dialogue-speaker"></div><div id="dialogue-text"></div></div>
+  <div id="toast" class="hidden"></div>
+  <div id="crosshair" style="display:none">+</div>
+  <div id="vignette"></div>
+  <div id="controls-hint">WASD drive / walk · Mouse look · E enter car · F punch · 2 pistol · R reload · M mission · G street race · Esc pause</div>
+</div>
+
+<div id="title-screen" class="screen">
+  <div class="title-inner">
+    <div class="title-kicker">AN OPEN-WORLD CRIME GAME</div>
+    <h1>SOLARA<br>BAY</h1>
+    <p class="title-story">Nia Reyes came home to Solara Bay to drive a delivery scooter. One stolen
+    sports car later, Victor Kaine's whole crew wants her gone — and the tide
+    is the only road out. Steal cars, outrun the PD across the causeway at low
+    tide, and take the casino's take in five missions.</p>
+    <div class="title-buttons">
+      <button id="btn-new" class="btn primary">▶ New Game</button>
+      <button id="btn-continue" class="btn">Continue</button>
+      <button id="btn-howto" class="btn">How to play</button>
+    </div>
+    <div id="continue-info"></div>
+    <div id="howto" class="panel hidden">
+      <b>On foot:</b> WASD move · Shift run · Space jump · Mouse look · E enter car ·
+      F punch · 2 pistol, click to shoot · R reload<br>
+      <b>Driving:</b> W accelerate · S brake / reverse · A/D steer · Space handbrake ·
+      E leave car · H horn<br>
+      <b>Other:</b> M next mission · G street race (in a car, at the start line
+      by the casino) · Esc pause · The gold marker is your objective ·
+      the causeway floods at high tide — cross it at low tide, the cruisers can't follow.
+      Golden shells (🐚) hide on the beach and the island — 12 in all, +$50 each.
+    </div>
+    <p class="title-foot">An original game. No Rockstar content — every name, character, street and sound was made for Solara Bay.</p>
+  </div>
+</div>
+
+<div id="pause-screen" class="screen hidden">
+  <div class="menu-card panel">
+    <h2>PAUSED</h2>
+    <button id="btn-resume" class="btn primary">Resume</button>
+    <button id="btn-restart-mission" class="btn">Restart mission</button>
+    <button id="btn-settings" class="btn">Settings</button>
+    <button id="btn-quit-title" class="btn">Save &amp; quit to title</button>
+    <div id="settings" class="hidden">
+      <label>Sound effects <input id="set-sfx" type="range" min="0" max="1" step="0.05"></label>
+      <label>Music <input id="set-music" type="range" min="0" max="1" step="0.05"></label>
+      <label>Mouse sensitivity <input id="set-sens" type="range" min="0.5" max="2" step="0.1"></label>
+      <label><input id="set-mute" type="checkbox"> Mute all</label>
+    </div>
+  </div>
+</div>
+
+<div id="failed-screen" class="screen hidden">
+  <div class="menu-card panel">
+    <h2>MISSION FAILED</h2>
+    <p id="failed-reason"></p>
+    <button id="btn-retry" class="btn primary">Retry mission</button>
+    <button id="btn-freeroam" class="btn">Free roam</button>
+  </div>
+</div>
+
+<div id="over-screen" class="screen hidden">
+  <div class="menu-card panel">
+    <h2 id="over-title">BUSTED</h2>
+    <p id="over-sub"></p>
+    <button id="btn-over-ok" class="btn primary">Press Enter</button>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
