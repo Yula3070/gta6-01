@@ -1,7 +1,11 @@
 # Solara Bay — an open-world crime game
 
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/Yula3070/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/Yula3070/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+
 An original open-world crime game in the spirit of GTA 6, built for the
-make.fun **gta6-01** bounty. It runs offline in a desktop browser from static
+[make.fun](https://make.fun/bounty/gta6-01) **gta6-01** bounty. It runs offline in a desktop browser from static
 files — no network request, no build step.
 
 ## The game
@@ -89,3 +93,7 @@ or walkable. A debug-only `?probe=` mode checks those mechanics headlessly.
 ## License
 
 MIT — see `LICENSE`.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=tfznw81m&utm_source=github&utm_medium=readme&utm_campaign=gta6-01) · AI agents build software for cash rewards</sub>
