@@ -1,7 +1,9 @@
 // The wanted system: heat from crimes, stars, police cruisers that chase and
-// ram, foot cops that close in, and getting busted when they catch the player
-// standing still. Losing the heat (out of sight, or the tide causeway the
-// cruisers will not follow) clears the stars.
+// ram, foot cops that close in, a police helicopter with a searchlight at
+// three stars and up, and getting busted when they catch the player standing
+// still. Losing the heat (out of sight, or the tide causeway the cruisers
+// will not follow) clears the stars.
+import * as THREE from 'three';
 import { CAUSEWAY, WANTED, WATER_Z } from './config.js';
 import { createCar, driveCar, removeCar } from './vehicles.js';
 import { createPed, removePed } from './peds.js';
@@ -12,10 +14,80 @@ export function createPolice(game) {
     stars: 0,
     cruisers: [],
     footCops: [],
+    heli: null, // { group, rotor, beacon, angle } while stars >= 3
     bustedTimer: 0,
     lastSeenTimer: 0,
     sirenOn: false,
   };
+}
+
+/** Police helicopter: navy body, tail boom, spinning main rotor, a flashing
+ * red beacon, and a searchlight cone that leans down onto the player. Built
+ * from the same box/cylinder primitives as the cars — no new assets. */
+function makeHeliMesh() {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a3a5c });
+  const darkMat = new THREE.MeshLambertMaterial({ color: 0x14161a });
+  const glassMat = new THREE.MeshLambertMaterial({ color: 0x1a2530 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.3, 5.2), bodyMat);
+  g.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.9, 1.8), glassMat);
+  cabin.position.set(0, 0.15, 1.6);
+  g.add(cabin);
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 4.2), bodyMat);
+  tail.position.set(0, 0.25, -4.2);
+  g.add(tail);
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.5, 1.0), bodyMat);
+  fin.position.set(0, 0.9, -6.0);
+  g.add(fin);
+  const skidL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 4.0), darkMat);
+  skidL.position.set(-0.9, -1.0, 0);
+  const skidR = skidL.clone();
+  skidR.position.x = 0.9;
+  g.add(skidL, skidR);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.9, 8), darkMat);
+  mast.position.y = 1.1;
+  g.add(mast);
+  const rotor = new THREE.Group();
+  const bladeGeo = new THREE.BoxGeometry(9.5, 0.07, 0.45);
+  const b1 = new THREE.Mesh(bladeGeo, darkMat);
+  const b2 = new THREE.Mesh(bladeGeo, darkMat);
+  b2.rotation.y = Math.PI / 2;
+  rotor.add(b1, b2);
+  rotor.position.y = 1.6;
+  g.add(rotor);
+  // Flashing red beacon on the roof.
+  const beacon = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.15, 0.3),
+    new THREE.MeshLambertMaterial({ color: 0xaa0000, emissive: 0xff0000, emissiveIntensity: 1 }),
+  );
+  beacon.position.set(0, 0.85, -1.5);
+  g.add(beacon);
+  // Searchlight: a narrow shaft from the helicopter down onto the player
+  // (orbit radius 20, height 15, so the beam leans atan(20/15) off vertical).
+  const beam = new THREE.Mesh(
+    new THREE.ConeGeometry(3.5, 25, 16, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xfff6c8, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false }),
+  );
+  beam.position.set(0, -7.5, 10);
+  beam.rotation.x = -Math.atan2(20, 15);
+  g.add(beam);
+  return { group: g, rotor, beacon, angle: -Math.PI / 2 };
+}
+
+function spawnHeli(game) {
+  const h = makeHeliMesh();
+  const p = game.player;
+  h.group.position.set(p.pos.x, 15, p.pos.z - 20);
+  game.scene.add(h.group);
+  return h;
+}
+
+function removeHeli(game) {
+  const h = game.police.heli;
+  if (!h) return;
+  game.scene.remove(h.group);
+  game.police.heli = null;
 }
 
 export function addHeat(game, amount) {
@@ -38,6 +110,7 @@ export function clearWanted(game) {
   p.cruisers = [];
   for (const c of [...p.footCops]) removePed(game, c);
   p.footCops = [];
+  removeHeli(game);
   p.bustedTimer = 0;
   game.audio.setSiren(false, 999);
 }
@@ -79,6 +152,21 @@ export function updatePolice(game, dt) {
   const wantCops = wanted >= 2 ? wanted - 1 : 0;
   while (p.footCops.length < wantCops) spawnFootCop(game);
   while (p.footCops.length > wantCops) removePed(game, p.footCops.pop());
+
+  // Police helicopter: joins at three stars, circles above the player with
+  // its searchlight on, leaves when the heat drops below three.
+  if (wanted >= 3 && !p.heli) p.heli = spawnHeli(game);
+  if (wanted < 3 && p.heli) removeHeli(game);
+  if (p.heli) {
+    const h = p.heli;
+    h.angle += dt * 0.32;
+    const px = player.pos.x;
+    const pz = player.pos.z;
+    h.group.position.set(px + Math.cos(h.angle) * 20, 15, pz + Math.sin(h.angle) * 20);
+    h.group.rotation.y = Math.atan2(px - h.group.position.x, pz - h.group.position.z);
+    h.rotor.rotation.y += dt * 16;
+    h.beacon.material.emissiveIntensity = Math.floor(game.time.elapsed * 3) % 2 === 0 ? 2.0 : 0.2;
+  }
 
   // Heat decays only while no police is close enough to see the player.
   let nearest = Infinity;

@@ -75,17 +75,24 @@ export function stageShot(name, game) {
     return { screen: 'play' };
   }
   if (name === 'chase') {
-    game.time.clock = 205; // night
-    // A sedan, not the sports car: cruisers (max 33) can catch a sedan
-    // (max 27) and stay glued to it, so the chase reads in every frame.
-    putPlayerInCar(game, 'sedan', 84, -140, 0, 24);
-    addHeat(game, 500); // three stars
-    p.money = 3420;
-    game.hud.setObjective('Escape the police!');
+    game.time.clock = 178; // dusk: low orange sun, headlights on
+    // The Big One: the casino take is ours, every cruiser in Solara on us.
+    // Start mission 5, then jump to the escape step — the van is taken.
+    game.missions.start(4);
+    game.missions.current.step = 1;
+    game.missions.setupStep(game);
+    // The intro dialogue would typewriter over the road; the mission card
+    // tells the story instead, so hide it outright.
+    document.getElementById('dialogue').classList.add('hidden');
+    game.hud.setObjective(`The Big One: ${game.missions.current.def.steps[1].label}`);
+    // Armored van, southbound on the avenue, already running.
+    putPlayerInCar(game, 'armored', 84, -140, 0, 22);
+    addHeat(game, 700); // four stars — the helicopter joins at three
+    p.money = 1250;
     game.screen = 'play';
     // Two cruisers staged flanking the player, close behind: from the
-    // front-on camera they read big and clearly beside the sedan, not as
-    // a speck on the horizon. (The wanted system spawns the third.)
+    // front-on camera they read big and clearly beside the van, not as
+    // a speck on the horizon. (The wanted system spawns the rest.)
     const lead = createCar(game, 'police', 78, -150, 0, { police: true });
     lead.targetSpeed = 30;
     lead.speed = 30;
@@ -93,7 +100,19 @@ export function stageShot(name, game) {
     wing.targetSpeed = 30;
     wing.speed = 28;
     game.police.cruisers.push(lead, wing);
-    // Front-on camera, closer in: the sedan fills more of the frame and
+    // Traffic on the avenue behind the van, so the street reads busy
+    // instead of empty. (Edges set the way the mission van does it.)
+    const t1 = createCar(game, 'taxi', 84, -160, 0, { traffic: true, targetSpeed: 14 });
+    const t2 = createCar(game, 'sedan', 78, -190, 0, { traffic: true, targetSpeed: 12 });
+    const t3 = createCar(game, 'hatch', 90, -150, 0, { traffic: true, targetSpeed: 16 });
+    for (const tc of [t1, t2, t3]) {
+      const node = game.city.nearestNode(tc.pos.x, tc.pos.z);
+      const edge = node.edges[0];
+      tc.edge = edge;
+      tc.fromA = edge.a === node;
+      tc.progress = 0;
+    }
+    // Front-on camera, closer in: the van fills more of the frame and
     // the flanking cruisers sit ~25 units from the lens, not ~40.
     game.shotCamera = (g) => {
       const car = g.player.inCar;
@@ -106,6 +125,9 @@ export function stageShot(name, game) {
       };
     };
     settle(game, 4);
+    // Park the helicopter due north of the van, high in the frame, its
+    // searchlight beam falling on the van.
+    if (game.police.heli) game.police.heli.angle = -Math.PI / 2;
     return { screen: 'play' };
   }
   if (name === 'mission') {

@@ -68,6 +68,17 @@ export function createHud(game) {
       const r = game.missions.race;
       const t = c ? c.timer : j ? j.timer : r ? r.timer : 0;
       el('mission-timer').textContent = t > 0 ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '';
+      // Mission card: which job, which step, what next — only while a
+      // story mission runs, so free roam stays clean.
+      const mc = el('mission-card');
+      if (c && c.def.steps[c.step]) {
+        const idx = game.missions.list.indexOf(c.def) + 1;
+        el('mission-name').textContent = `MISSION ${idx}/${game.missions.list.length} · ${c.def.title.toUpperCase()}`;
+        el('mission-step').textContent = `STEP ${c.step + 1}/${c.def.steps.length} — ${c.def.steps[c.step].label}`;
+        mc.classList.remove('hidden');
+      } else {
+        mc.classList.add('hidden');
+      }
       // Dialogue typewriter.
       if (dialogueTimer > 0) {
         dialogueTimer -= dt;
