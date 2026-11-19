@@ -38,6 +38,10 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: 
 #money { font-size: 22px; font-weight: 800; color: #7ee2a0; margin-top: 4px; }
 #shells { font-size: 13px; font-weight: 700; color: #ffd700; margin-top: 2px; }
 
+#mission-card { position: absolute; top: 140px; left: 14px; min-width: 240px; max-width: 290px; }
+#mission-name { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: #ffd700; }
+#mission-step { font-size: 13px; font-weight: 600; margin-top: 3px; line-height: 1.35; }
+
 #topright { position: absolute; top: 14px; right: 14px; text-align: right; min-width: 200px; }
 #stars { font-size: 22px; letter-spacing: 3px; color: rgba(255, 255, 255, 0.25); line-height: 1; }
 #stars span.lit { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.8); }
