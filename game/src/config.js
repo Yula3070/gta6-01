@@ -66,7 +66,7 @@ export const WANTED = {
 /** Money, rewards and prices. */
 export const ECONOMY = {
   startMoney: 250,
-  missionRewards: [150, 300, 450, 600, 1500],
+  missionRewards: [150, 300, 450, 600, 1500, 2500],
   shellValue: 50,
   bustedFine: 200,
   wastedFine: 150,

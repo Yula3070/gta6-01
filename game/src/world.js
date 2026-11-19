@@ -1,6 +1,5 @@
-// The world: owns the renderer, camera, lights, the day/night cycle and the
-// tide, and steps every system in fixed 1/60 s slices. Also owns entering
-// and leaving cars, getting busted or wasted, and the save file.
+// The world: renderer, camera, lights, day/night, tide; steps every
+// system in fixed 1/60 s slices. Also owns cars, busted/wasted, saves.
 import * as THREE from 'three';
 import { CAUSEWAY, DAY_LENGTH, NAMES, PALETTE, SAVE_KEY, SETTINGS_KEY, STEP, TIDE_PASSABLE, TIDE_PERIOD, WANTED } from './config.js';
 import { createRandom } from './random.js';
@@ -62,7 +61,7 @@ export function createGame(canvas, seed) {
   game.missions = createMissions(game);
   game.hud = createHud(game);
 
-  // Nia's sedan, traffic, pedestrians, pickups, shells.
+
   createCar(game, 'sedan', -126, -18, Math.PI, { parked: true });
   spawnParkedCars(game, game.rng);
   spawnTraffic(game, 12, game.rng);
@@ -132,7 +131,7 @@ export function createGame(canvas, seed) {
         playTime: game.stats.playTime,
       }));
     } catch {
-      // Storage off: the save lasts this visit only.
+
     }
   };
   game.loadGame = () => {
@@ -163,14 +162,14 @@ export function createGame(canvas, seed) {
       game.audio.setMuted(game.settings.muted);
       game.input.setSensitivity(game.settings.sensitivity);
     } catch {
-      // Defaults stand.
+
     }
   };
   game.saveSettings = () => {
     try {
       window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(game.settings));
     } catch {
-      // Ignore.
+
     }
   };
   game.loadSettings();
@@ -188,7 +187,7 @@ function collidePlayer(game) {
       p.pos.z += hit.nz * hit.depth;
     }
   }
-  // Island rim: stay on the sand.
+
   if (p.pos.z > 540) {
     const dx = p.pos.x;
     const dz = p.pos.z - 610;
@@ -198,15 +197,15 @@ function collidePlayer(game) {
       p.pos.z = 610 + (dz / d) * 54;
     }
   }
-  // Flooded causeway entrances are walls; mid-causeway stays passable.
+
   if (game.tide.level > TIDE_PASSABLE) {
     if (Math.abs(p.pos.x) < CAUSEWAY.x1 + 1) {
       if (p._prevZ <= CAUSEWAY.z0 && p.pos.z > CAUSEWAY.z0) p.pos.z = CAUSEWAY.z0;
       else if (p._prevZ >= CAUSEWAY.z1 && p.pos.z < CAUSEWAY.z1) p.pos.z = CAUSEWAY.z1;
     }
   }
-  // The bay walls (city colliders) stop the player at the waterline; only
-  // the causeway gap and the island are crossable.
+  // The bay walls stop the player at the waterline; only the causeway
+  // gap and the island are crossable.
 }
 
 function enterCar(game) {
@@ -251,13 +250,11 @@ function exitCar(game) {
 function updateCamera(game, dt) {
   const p = game.player;
   const cam = game.camera;
-  // A staged screenshot may pin the camera (e.g. the chase shot films the
-  // player car front-on, so the cruisers read in frame behind it).
+  // A staged screenshot may pin the camera (chase shot: front-on).
   if (game.shotCamera) {
     const shot = game.shotCamera(game);
     if (shot) {
-      // Snap (no lerp): the target moves with the car, so a lagging lerp
-      // would make the framing depend on the frame rate.
+
       cam.position.copy(shot.pos);
       cam.lookAt(shot.look);
       return;
@@ -290,7 +287,7 @@ function updateCamera(game, dt) {
     cam.fov += (62 - cam.fov) * Math.min(1, dt * 3);
     cam.updateProjectionMatrix();
   }
-  // Smooth follow + trauma shake.
+
   const k = 1 - Math.exp(-dt * (game.screen === 'title' ? 1.2 : 9));
   cam.position.lerp(target, k);
   if (game.shake > 0) {
@@ -338,7 +335,7 @@ function updateTide(game, dt) {
   const level = (Math.sin(game.tide.phase) + 1) / 2;
   game.tide.level = level;
   game.city.flood.visible = level > TIDE_PASSABLE;
-  // Time until the level next crosses the passable line.
+
   let toNext = 0;
   for (let s = 5; s <= TIDE_PERIOD; s += 5) {
     const l = (Math.sin(game.tide.phase + (s * Math.PI * 2) / TIDE_PERIOD) + 1) / 2;
@@ -378,7 +375,7 @@ export function stepGame(game, dt) {
   p._prevZ = p.pos.z;
   const prevCarZ = p.inCar ? p.inCar.pos.z : 0;
 
-  // Pause, missions, enter/exit, weapons.
+
   if (game.input.wasPressedAny(['Escape', 'KeyP'])) {
     game.screen = 'paused';
     game.hud.showScreen('pause');
@@ -389,7 +386,7 @@ export function stepGame(game, dt) {
   }
   if (game.input.wasPressedAny(['KeyM'])) {
     if (game.missions.current) {
-      // M does nothing mid-mission; the objective is on screen already.
+
     } else if (game.missions.race) {
       game.missions.cancelRace(game);
     } else if (game.missions.index < game.missions.list.length) {
@@ -420,11 +417,11 @@ export function stepGame(game, dt) {
   if (game.input.wasPressedAny(['KeyF'])) punch(game);
   if (game.input.takeClick() && p.weapon === 'pistol') shoot(game);
   if (game.input.isDown('KeyH') && p.inCar) {
-    // Horn: a short two-tone blip is enough; the engine covers the rest.
+
     if (Math.random() < dt * 2) game.audio.click();
   }
 
-  // Movement: on foot or driving.
+
   if (p.inCar) {
     const car = p.inCar;
     const throttle = (game.input.isDown('KeyW') || game.input.isDown('ArrowUp') ? 1 : 0)
@@ -433,12 +430,11 @@ export function stepGame(game, dt) {
       - (game.input.isDown('KeyD') || game.input.isDown('ArrowRight') ? 1 : 0);
     const handbrake = game.input.isDown('Space');
     driveCar(game, car, handbrake ? (car.speed > 0 ? -1 : 0) : throttle, steer, dt);
-    // The player rides with the car: missions, police, peds and the minimap
-    // all read the player position, so it must track the car.
+    // The player rides with the car, so the position must track it.
     p.pos.x = car.pos.x;
     p.pos.z = car.pos.z;
     p.angle = car.angle;
-    // Flooded causeway entrance blocks the car too.
+
     if (game.tide.level > TIDE_PASSABLE && Math.abs(car.pos.x) < CAUSEWAY.x1 + 1) {
       if (prevCarZ <= CAUSEWAY.z0 && car.pos.z > CAUSEWAY.z0) {
         car.pos.z = CAUSEWAY.z0;
@@ -448,10 +444,10 @@ export function stepGame(game, dt) {
         car.speed *= 0.3;
       }
     }
-    // The bay walls (city colliders, via collideCars) stop cars at the
-    // waterline; only the causeway gap is crossable, at low tide.
+    // The bay walls stop cars at the waterline; only the causeway gap
+    // is crossable, at low tide.
     game.audio.setEngine(Math.abs(car.speed) / car.spec.maxSpeed, Math.abs(throttle));
-    // Headlight at night.
+
     const headlight = game.scene.children.find((o) => o.isSpotLight);
     if (headlight) {
       const fx = Math.sin(car.angle);
@@ -460,7 +456,7 @@ export function stepGame(game, dt) {
       headlight.target.position.set(car.pos.x + fx * 30, 0.4, car.pos.z + fz * 30);
       headlight.intensity = game.time.nightFactor * 160;
     }
-    // The player's car hitting peds is a crime.
+
     for (const ped of [...game.peds]) {
       if (ped.isCop || ped.isGoon) continue;
       const d = Math.hypot(ped.pos.x - car.pos.x, ped.pos.z - car.pos.z);
@@ -493,11 +489,11 @@ export function stepGame(game, dt) {
     if (ped._hitCooldown) ped._hitCooldown = Math.max(0, ped._hitCooldown - dt);
   }
 
-  // Collisions and the rest of the world.
+
   collidePlayer(game);
   for (const car of game.cars) {
     if (car.isPlayer) continue;
-    // A parked or traffic car touching the player on foot hurts.
+
     if (!p.inCar && Math.abs(car.speed) > 4) {
       const d = Math.hypot(car.pos.x - p.pos.x, car.pos.z - p.pos.z);
       if (d < 2.2) game.damagePlayer(game, 14, car.pos);
@@ -507,7 +503,7 @@ export function stepGame(game, dt) {
   if (hardHit && p.inCar) {
     game.audio.crash();
     game.shake = Math.min(1, game.shake + 0.3);
-    // Ramming a cruiser is a crime.
+
     for (const c of game.police.cruisers) {
       if (Math.hypot(c.pos.x - p.inCar.pos.x, c.pos.z - p.inCar.pos.z) < 4) {
         addHeat(game, WANTED.hitCop);
@@ -515,7 +511,7 @@ export function stepGame(game, dt) {
       }
     }
   }
-  // A wrecked car stalls; the player has to get out.
+
   if (p.inCar && p.inCar.health <= 0) {
     p.inCar.speed = 0;
     p.inCar.isTraffic = false;
@@ -530,11 +526,11 @@ export function stepGame(game, dt) {
   updatePickups(game, dt);
   game.effects.update(dt);
 
-  // Health regen after 8 quiet seconds.
+
   if (game.time.elapsed - p.lastDamage > 8 && p.health > 0 && p.health < 100) {
     p.health = Math.min(100, p.health + 2 * dt);
   }
-  // Interaction prompt.
+
   if (!p.inCar) {
     const car = nearestCar(game, p.pos.x, p.pos.z, 4.5);
     game.hud.setPrompt(car ? (car.isTraffic ? 'E — Steal car' : 'E — Enter car') : '');

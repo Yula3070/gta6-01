@@ -8,6 +8,7 @@ import { STEP, SAVE_KEY } from './config.js';
 import { createGame, resizeGame, stepGame } from './world.js';
 import { stageShot, stubInput, stubInputStill } from './shots.js';
 import { createCar } from './vehicles.js';
+import { damageGoon } from './combat.js';
 import { addHeat } from './police.js';
 
 const MAX_FRAME = 0.25;
@@ -90,6 +91,59 @@ function runProbe(game, name) {
     results.maxCruiserZ = results.cruisers.length ? Math.max(...results.cruisers.map((c) => c.z)) : -1;
     results.playerZ = +p.pos.z.toFixed(1);
     results.passed = results.cruisers.every((c) => c.z <= 296 || (c.z <= 336 && Math.abs(c.x) >= 9));
+  } else if (name === 'roadblock') {
+    const car = carAt(84, -100, 0, 0);
+    p.pos.set(84, 0, -100);
+    addHeat(game, 700); // four stars
+    stepSeconds(2);
+    const rb = game.police.roadblock;
+    results.stars = game.police.stars;
+    results.roadblock = !!rb;
+    if (rb) {
+      // Ram it head-on: line the car up on the first cruiser, 15 units out.
+      const target = rb.cars[0];
+      car.pos.set(target.pos.x, 0, target.pos.z - 15);
+      p.pos.set(target.pos.x, 0, target.pos.z - 15);
+      car.angle = 0;
+      car.speed = 20;
+      car.health = 100;
+      car._crashCd = 0;
+      for (const c of rb.cars) c._crashCd = 0;
+      stepSeconds(1);
+      results.healthAfter = +car.health.toFixed(0);
+      results.speedAfter = +car.speed.toFixed(1);
+      results.passed = results.stars >= 4 && results.healthAfter < 100 && results.speedAfter < 20;
+    } else {
+      results.passed = false;
+    }
+  } else if (name === 'm6') {
+    const money0 = p.money;
+    game.missions.start(5);
+    results.started = !!game.missions.current;
+    p.pos.set(-24, 0, 588); // step 1: reach the marina
+    p.mesh.position.copy(p.pos);
+    stepSeconds(0.2);
+    const goons = game.missions.current
+      ? [...game.missions.current.spawned.filter((s) => game.peds.includes(s))] : [];
+    results.guards = goons.length;
+    for (const g of goons) damageGoon(game, g, 999, p.pos); // step 2: guards down
+    stepSeconds(0.2);
+    const van = game.cars.find((c) => c.type === 'armored');
+    if (van) { // step 3: steal the armored van
+      van.isPlayer = true;
+      van.isParked = false;
+      p.inCar = van;
+      p.mesh.visible = false;
+    }
+    stepSeconds(0.2);
+    if (van) { // step 4: escape to the lighthouse
+      van.pos.set(0, 0, 612);
+      p.pos.set(0, 0, 612);
+    }
+    stepSeconds(0.2);
+    results.done = game.missions.done.includes('m6');
+    results.moneyDelta = Math.round(p.money - money0);
+    results.passed = results.done && results.moneyDelta === 2500;
   } else if (name === 'race') {
     // Street race autopilot: W held, A/D steer at the next checkpoint
     // (the same steering law the police chase uses).

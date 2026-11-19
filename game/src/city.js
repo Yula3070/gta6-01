@@ -1,11 +1,9 @@
-// Solara Bay itself: a procedural coastal city on a road grid, a beach and a
-// bay to the south, a tidal causeway to a lighthouse island, and the named
-// landmarks the story uses. Geometry is merged into a few meshes per material
-// so the scene stays fast. Also owns the road graph traffic drives on.
+// Solara Bay: a procedural coastal city, beach, bay, tidal causeway to a
+// lighthouse island, and the road graph traffic drives on.
 import * as THREE from 'three';
 import { BEACH_Z, CAUSEWAY, CITY_HALF, DISTRICTS, ISLAND, NAMES, PALETTE, ROADS, ROAD_PITCH, ROAD_WIDTH, WATER_Z } from './config.js';
 
-// ---- merged-box helper: one BufferGeometry from many tinted boxes --------
+// Merged-box helper: one BufferGeometry from many tinted boxes.
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 
 function mergeBoxes(parts) {
@@ -50,8 +48,7 @@ function mergeBoxes(parts) {
 }
 
 function windowTexture(litRatio) {
-  // Two canvases share one window layout: a light facade for the colour map
-  // (the district tint multiplies it) and a black one for the emissive map,
+  // Two canvases, one layout: light facade (colour) + black (emissive),
   // so only lit windows glow at night.
   const mapC = document.createElement('canvas');
   mapC.width = 128;
@@ -65,7 +62,7 @@ function windowTexture(litRatio) {
   g.fillRect(0, 0, 128, 256);
   e.fillStyle = '#000000';
   e.fillRect(0, 0, 128, 256);
-  // A plain band at the top so the roof face reads as roof, not windows.
+  // Plain band at the top: the roof face reads as roof, not windows.
   g.fillStyle = 'rgba(0,0,0,0.2)';
   g.fillRect(0, 0, 128, 10);
   for (let row = 0; row < 12; row += 1) {
@@ -123,7 +120,7 @@ export function buildCity(scene, rng) {
   const group = new THREE.Group();
   scene.add(group);
 
-  // ---- ground: grass, then roads, sidewalks and markings (merged) -------
+  // Ground: grass, roads, sidewalks, markings (merged).
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(CITY_HALF * 2 + 700, CITY_HALF * 2 + 900),
     new THREE.MeshLambertMaterial({ color: PALETTE.grass }),
@@ -137,14 +134,14 @@ export function buildCity(scene, rng) {
   const walkParts = [];
   const markParts = [];
   for (const r of ROADS) {
-    // Vertical road (along z) and horizontal road (along x).
+    // Vertical (along z) and horizontal (along x) roads.
     roadParts.push({ x: r, y: 0, z: 0, sx: ROAD_WIDTH, sy: 0.1, sz: CITY_HALF * 2, color: PALETTE.road });
     roadParts.push({ x: 0, y: 0, z: r, sx: CITY_HALF * 2, sy: 0.1, sz: ROAD_WIDTH, color: PALETTE.road });
     walkParts.push({ x: r - ROAD_WIDTH / 2 - 2.5, y: 0.02, z: 0, sx: 5, sy: 0.08, sz: CITY_HALF * 2, color: PALETTE.sidewalk });
     walkParts.push({ x: r + ROAD_WIDTH / 2 + 2.5, y: 0.02, z: 0, sx: 5, sy: 0.08, sz: CITY_HALF * 2, color: PALETTE.sidewalk });
     walkParts.push({ x: 0, y: 0.02, z: r - ROAD_WIDTH / 2 - 2.5, sx: CITY_HALF * 2, sy: 0.08, sz: 5, color: PALETTE.sidewalk });
     walkParts.push({ x: 0, y: 0.02, z: r + ROAD_WIDTH / 2 + 2.5, sx: CITY_HALF * 2, sy: 0.08, sz: 5, color: PALETTE.sidewalk });
-    // Dashed centre lines.
+
     for (let t = -CITY_HALF + 14; t < CITY_HALF - 10; t += 16) {
       markParts.push({ x: r, y: 0.08, z: t, sx: 0.5, sy: 0.02, sz: 8, color: 0xf5d76e });
       markParts.push({ x: t, y: 0.08, z: r, sx: 8, sy: 0.02, sz: 0.5, color: 0xf5d76e });
@@ -155,7 +152,7 @@ export function buildCity(scene, rng) {
   const markMesh = new THREE.Mesh(mergeBoxes(markParts), new THREE.MeshBasicMaterial({ vertexColors: true }));
   group.add(roadMesh, walkMesh, markMesh);
 
-  // ---- buildings (merged, tinted, one window texture) --------------------
+  // Buildings (merged, tinted, one window texture).
   const winTex = windowTexture(0.28);
   const buildingParts = [];
   const roofParts = [];
@@ -188,7 +185,7 @@ export function buildCity(scene, rng) {
     signs.push(sign);
   }
 
-  // Fill the remaining blocks with procedural buildings; the (0,0) block is a park.
+  // Fill the remaining blocks with buildings; (0,0) is a park.
   for (let ix = 0; ix < ROADS.length - 1; ix += 1) {
     for (let iz = 0; iz < ROADS.length - 1; iz += 1) {
       const bx0 = ROADS[ix] + ROAD_WIDTH / 2 + 3;
@@ -199,7 +196,7 @@ export function buildCity(scene, rng) {
       const cz = (bz0 + bz1) / 2;
       if (Math.abs(cx) < 1 && Math.abs(cz) < 1) continue; // the plaza park
       if (bz0 > BEACH_Z - 10) continue; // beach row stays open
-      // Skip blocks that hold a landmark.
+
       let taken = false;
       for (const def of landmarkDefs) {
         if (def.x > bx0 - 20 && def.x < bx1 + 20 && def.z > bz0 - 20 && def.z < bz1 + 20) taken = true;
@@ -224,7 +221,7 @@ export function buildCity(scene, rng) {
   const roofs = new THREE.Mesh(mergeBoxes(roofParts), new THREE.MeshLambertMaterial({ vertexColors: true }));
   group.add(buildings, roofs);
 
-  // ---- plaza park at (0,0): fountain, trees, benches ---------------------
+  // Plaza park at (0,0): fountain, trees, benches.
   const parkParts = [];
   const treeParts = [];
   const trunkParts = [];
@@ -248,7 +245,7 @@ export function buildCity(scene, rng) {
   const park = new THREE.Mesh(mergeBoxes(parkParts), new THREE.MeshLambertMaterial({ vertexColors: true }));
   group.add(park);
 
-  // ---- streetlights at intersections -------------------------------------
+  // Streetlights at intersections.
   const poleParts = [];
   const headGeo = new THREE.BoxGeometry(1.6, 0.5, 0.7);
   const headMat = new THREE.MeshLambertMaterial({ color: 0xdddddd, emissive: 0xffe9a8, emissiveIntensity: 0 });
@@ -265,10 +262,7 @@ export function buildCity(scene, rng) {
   const poles = new THREE.Mesh(mergeBoxes(poleParts), new THREE.MeshLambertMaterial({ vertexColors: true }));
   group.add(poles);
 
-  // ---- palms along the beach ----------------------------------------------
-  // Crown: a core plus five drooping fronds in two greens, each fanned out
-  // and slightly varied, so the palm reads as a tree at dusk instead of a
-  // green slab on a stick.
+  // Palms along the beach (drooping fronds, two greens).
   const palmTrunks = [];
   const palmTops = [];
   for (let x = -CITY_HALF; x <= CITY_HALF; x += 42) {
@@ -291,7 +285,7 @@ export function buildCity(scene, rng) {
   group.add(new THREE.Mesh(mergeBoxes(palmTrunks), new THREE.MeshLambertMaterial({ vertexColors: true })));
   group.add(new THREE.Mesh(mergeBoxes(palmTops), new THREE.MeshLambertMaterial({ vertexColors: true })));
 
-  // ---- beach, water, causeway, island ------------------------------------
+  // Beach, water, causeway, island.
   const sand = new THREE.Mesh(
     new THREE.PlaneGeometry(CITY_HALF * 2 + 200, WATER_Z - BEACH_Z + 8),
     new THREE.MeshLambertMaterial({ color: PALETTE.sand }),
@@ -314,7 +308,7 @@ export function buildCity(scene, rng) {
   );
   causewayMesh.position.set(0, 0.15, (CAUSEWAY.z0 + CAUSEWAY.z1) / 2);
   group.add(causewayMesh);
-  // Flood water over the causeway, shown at high tide.
+
   const flood = new THREE.Mesh(
     new THREE.PlaneGeometry(CAUSEWAY.x1 - CAUSEWAY.x0 + 4, CAUSEWAY.z1 - CAUSEWAY.z0),
     new THREE.MeshLambertMaterial({ color: PALETTE.waterDay, transparent: true, opacity: 0.85 }),
@@ -324,7 +318,7 @@ export function buildCity(scene, rng) {
   flood.visible = false;
   group.add(flood);
 
-  // Island: sand disc, lighthouse, a couple of shacks, docks.
+
   const island = new THREE.Mesh(
     new THREE.CylinderGeometry(ISLAND.r, ISLAND.r + 6, 2.4, 24),
     new THREE.MeshLambertMaterial({ color: PALETTE.sand }),
@@ -348,24 +342,24 @@ export function buildCity(scene, rng) {
   group.add(lighthouse);
   addBuilding(ISLAND.x + 16, ISLAND.z + 8, 16, 12, 7, 0x7fb3a3);
   addBuilding(ISLAND.x - 4, ISLAND.z + 18, 12, 10, 6, 0xd98841);
-  // Docks reaching into the water.
+
   const dockParts = [];
   for (let i = 0; i < 3; i += 1) {
     dockParts.push({ x: -30 + i * 30, y: 0.4, z: ISLAND.z - ISLAND.r - 8, sx: 6, sy: 0.6, sz: 18, color: 0x8a6f4d });
   }
   group.add(new THREE.Mesh(mergeBoxes(dockParts), new THREE.MeshLambertMaterial({ vertexColors: true })));
 
-  // City-edge walls (invisible to the eye, keep the player inside).
+
   colliders.push({ x0: -CITY_HALF - 20, z0: -CITY_HALF - 20, x1: -CITY_HALF, z1: CITY_HALF + 400 });
   colliders.push({ x0: CITY_HALF, z0: -CITY_HALF - 20, x1: CITY_HALF + 20, z1: CITY_HALF + 400 });
   colliders.push({ x0: -CITY_HALF - 20, z0: -CITY_HALF - 20, x1: CITY_HALF + 20, z1: -CITY_HALF });
-  // Water edge: only the causeway crosses. The colliders stop at the island's
-  // north shore so the island itself stays walkable.
+  // Water edge: only the causeway crosses; colliders stop at the island's
+  // north shore so the island stays walkable.
   colliders.push({ x0: -800, z0: WATER_Z - 2, x1: CAUSEWAY.x0, z1: ISLAND.z - ISLAND.r - 2 });
   colliders.push({ x0: CAUSEWAY.x1, z0: WATER_Z - 2, x1: 800, z1: ISLAND.z - ISLAND.r - 2 });
   colliders.push({ x0: -800, z0: ISLAND.z + ISLAND.r + 2, x1: 800, z1: 1200 });
 
-  // ---- road graph for traffic --------------------------------------------
+  // Road graph for traffic.
   const nodes = new Map();
   function nodeAt(x, z) {
     const key = `${x},${z}`;
@@ -418,7 +412,7 @@ export function buildCity(scene, rng) {
       const dx = fromA ? edge.b.x - edge.a.x : edge.a.x - edge.b.x;
       const dz = fromA ? edge.b.z - edge.a.z : edge.a.z - edge.b.z;
       const len = Math.hypot(dx, dz) || 1;
-      // Right of the direction of travel.
+
       return { x: (-dz / len) * 3.5, z: (dx / len) * 3.5 };
     },
     update(dt, time, nightFactor) {

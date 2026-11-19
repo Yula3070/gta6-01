@@ -1,12 +1,10 @@
 // The screenshot scenes behind ?shot=start|drive|chase|mission. Each one
-// sets up a real, seeded game state and plays it forward a few seconds with
-// a scripted driver (cars start exactly on a road centreline and drive
-// straight, so no steering is needed), so the frame is what a short game
-// really looks like and the same seed always gives the same frame.
+// sets up a real, seeded game state and plays it forward a few seconds
+// with a scripted driver, so the same seed always gives the same frame.
 import * as THREE from 'three';
 import { STEP } from './config.js';
 import { createCar } from './vehicles.js';
-import { addHeat } from './police.js';
+import { addHeat, makeRoadblockAt, removeRoadblock } from './police.js';
 
 export function stubInput() {
   return {
@@ -51,12 +49,9 @@ function putPlayerInCar(game, type, x, z, angle, speed) {
 }
 
 function settle(game, seconds, stub) {
-  // Play the world forward with the stub input so traffic and police settle
-  // into frame before the screenshot is taken.
   const realInput = game.input;
   game.input = stub || stubInput();
   for (let i = 0; i < Math.floor(seconds / STEP); i += 1) {
-    // The stub holds W, so the player car drives straight down its road.
     game.step(STEP);
   }
   game.input = realInput;
@@ -67,7 +62,6 @@ export function stageShot(name, game) {
   if (name === 'drive') {
     game.time.clock = 150;
     putPlayerInCar(game, 'sports', 0, -200, 0, 24);
-    // The city's own traffic (spawned at boot) already fills the road ahead.
     p.money = 1250;
     game.hud.setObjective('Free roam — explore Solara Bay');
     game.screen = 'play';
@@ -76,23 +70,23 @@ export function stageShot(name, game) {
   }
   if (name === 'chase') {
     game.time.clock = 178; // dusk: low orange sun, headlights on
-    // The Big One: the casino take is ours, every cruiser in Solara on us.
-    // Start mission 5, then jump to the escape step — the van is taken.
-    game.missions.start(4);
-    game.missions.current.step = 1;
+    // The Last Tide: the night boat is leaving, the ledger is in the van,
+    // and every cruiser in Solara is on us. Start mission 6, then jump to
+    // the escape step — the van is taken.
+    game.missions.start(5);
+    game.missions.current.step = 3;
     game.missions.setupStep(game);
     // The intro dialogue would typewriter over the road; the mission card
     // tells the story instead, so hide it outright.
     document.getElementById('dialogue').classList.add('hidden');
-    game.hud.setObjective(`The Big One: ${game.missions.current.def.steps[1].label}`);
+    game.hud.setObjective(`The Last Tide: ${game.missions.current.def.steps[3].label}`);
     // Armored van, southbound on the avenue, already running.
     putPlayerInCar(game, 'armored', 84, -140, 0, 22);
-    addHeat(game, 700); // four stars — the helicopter joins at three
+    addHeat(game, 900); // five stars — the helicopter joins at three
     p.money = 1250;
     game.screen = 'play';
-    // Two cruisers staged flanking the player, close behind: from the
-    // front-on camera they read big and clearly beside the van, not as
-    // a speck on the horizon. (The wanted system spawns the rest.)
+    // Two cruisers staged flanking the player, close behind, so they read
+    // big beside the van from the front-on camera.
     const lead = createCar(game, 'police', 78, -150, 0, { police: true });
     lead.targetSpeed = 30;
     lead.speed = 30;
@@ -100,8 +94,7 @@ export function stageShot(name, game) {
     wing.targetSpeed = 30;
     wing.speed = 28;
     game.police.cruisers.push(lead, wing);
-    // Traffic on the avenue behind the van, so the street reads busy
-    // instead of empty. (Edges set the way the mission van does it.)
+    // Traffic on the avenue behind the van, so the street reads busy.
     const t1 = createCar(game, 'taxi', 84, -160, 0, { traffic: true, targetSpeed: 14 });
     const t2 = createCar(game, 'sedan', 78, -190, 0, { traffic: true, targetSpeed: 12 });
     const t3 = createCar(game, 'hatch', 90, -150, 0, { traffic: true, targetSpeed: 16 });
@@ -112,8 +105,8 @@ export function stageShot(name, game) {
       tc.fromA = edge.a === node;
       tc.progress = 0;
     }
-    // Front-on camera, closer in: the van fills more of the frame and
-    // the flanking cruisers sit ~25 units from the lens, not ~40.
+    // Front-on camera, closer in: the van fills the frame, the flanking
+    // cruisers sit ~25 units from the lens, not ~40.
     game.shotCamera = (g) => {
       const car = g.player.inCar;
       if (!car) return null;
@@ -128,6 +121,14 @@ export function stageShot(name, game) {
     // Park the helicopter due north of the van, high in the frame, its
     // searchlight beam falling on the van.
     if (game.police.heli) game.police.heli.angle = -Math.PI / 2;
+    // The live roadblock spawned during the settle is far behind the van
+    // by now (and was rammed through); lift it and stage a fresh one in
+    // frame, 22 units beyond the van on the avenue, facing it — close
+    // enough that the two cruisers and the striped barrier read.
+    removeRoadblock(game);
+    const van = game.player.inCar;
+    game.police.roadblock = makeRoadblockAt(game, van.pos.x, van.pos.z - 22, 0);
+    game.police.roadblockTimer = 0;
     return { screen: 'play' };
   }
   if (name === 'mission') {

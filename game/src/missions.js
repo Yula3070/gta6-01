@@ -1,4 +1,4 @@
-// The story of Solara Bay: five missions from courier to crew legend, plus
+// The story of Solara Bay: six missions from courier to crew legend, plus
 // endless courier side jobs once the story is done. Missions are data — a
 // list of steps — driven by one small controller.
 import * as THREE from 'three';
@@ -83,6 +83,20 @@ export const MISSIONS = [
     ],
     timeLimit: 300,
   },
+  {
+    id: 'm6',
+    title: 'The Last Tide',
+    giver: NAMES.fixer,
+    intro: "Kaine leaves on the night boat from the marina, Nia — with the ledger. Take down his guards, steal the armored van, run the causeway to the lighthouse. Tide's low, the road's open, every cruiser in Solara is on you. End it tonight.",
+    outro: "The ledger's ours, the van's ours, the tide carried you home. Solara Bay is yours now, Nia Reyes.",
+    steps: [
+      { type: 'goto', x: MARINA.x, z: MARINA.z, radius: 8, label: 'Reach the marina — Kaine is leaving on the night boat' },
+      { type: 'defeat', count: 3, x: MARINA.x, z: MARINA.z, label: "Take down Kaine's guards at the marina" },
+      { type: 'enterCar', carType: 'armored', x: MARINA.x, z: MARINA.z, radius: 12, label: "Steal Kaine's armored van" },
+      { type: 'deliver', x: HIDEOUT.x, z: HIDEOUT.z, radius: 12, carType: 'armored', label: 'Escape across the causeway to the lighthouse' },
+    ],
+    timeLimit: 360,
+  },
 ];
 
 function makeBeacon(game) {
@@ -117,6 +131,7 @@ export function createMissions(game) {
     start(index) {
       const def = MISSIONS[index];
       if (!def) return false;
+      this.index = index; // the reward follows the mission actually played
       const current = { def, step: 0, timer: def.timeLimit, goonsLeft: 0, van: null, spawned: [] };
       this.current = current;
       game.hud.showDialogue(def.giver, def.intro);
@@ -132,7 +147,10 @@ export function createMissions(game) {
       if (!step) return;
       if (step.type === 'defeat') {
         c.goonsLeft = step.count;
-        // Goon variety: a tough bruiser, a fast runner, two regulars.
+        // Goon variety: a tough bruiser, a fast runner, two regulars. They
+        // ring the step's own spot when it has one, else the garage (M4).
+        const cx = step.x !== undefined ? step.x : GARAGE.x;
+        const cz = step.z !== undefined ? step.z : GARAGE.z;
         const VARIETY = [
           { shirt: 0x5b2c6f, health: 150, speed: 2.8 },
           { shirt: 0x7b241c, health: 80, speed: 4.4 },
@@ -142,7 +160,7 @@ export function createMissions(game) {
         for (let i = 0; i < step.count; i += 1) {
           const a = (i / step.count) * Math.PI * 2;
           const v = VARIETY[i % VARIETY.length];
-          const goon = createPed(game, GARAGE.x + Math.cos(a) * 14, GARAGE.z + Math.sin(a) * 14, {
+          const goon = createPed(game, cx + Math.cos(a) * 14, cz + Math.sin(a) * 14, {
             shirt: v.shirt, pants: 0x1a1a1a, armed: true, goon: true, health: v.health, speed: v.speed,
           });
           c.spawned.push(goon);
@@ -176,7 +194,12 @@ export function createMissions(game) {
         }
         c.goonsLeft = 3;
       }
-      if (c.def.id === 'm3' && c.step === 0) {
+      if (c.def.id === 'm6' && step.type === 'enterCar') {
+        // Kaine's armored van, parked at the marina; no extra guards — the
+        // defeat step already spawned them.
+        c.spawned.push(createCar(game, 'armored', MARINA.x, MARINA.z, 0, { parked: true }));
+      }
+      if ((c.def.id === 'm3' || c.def.id === 'm6') && c.step === 0) {
         game.setTidePhase(3.0); // low tide starts a few seconds in
       }
       this.updateMarker(game);
@@ -255,16 +278,17 @@ export function createMissions(game) {
     onGoonDown(game, ped) {
       const c = this.current;
       if (!c) return;
-      if (c.def.id === 'm4' && c.step === 0) {
+      const step = c.def.steps[c.step];
+      if (step && step.type === 'defeat') {
         c.goonsLeft -= 1;
         game.hud.setObjective(`${c.def.title}: ${c.goonsLeft} goons left`);
         // Mid-fight checkpoint: Leo warns the getaway van is coming.
-        if (c.goonsLeft === 2) {
+        if (c.def.id === 'm4' && c.goonsLeft === 2) {
           game.hud.showDialogue(NAMES.brother, "Two down, Nia! The van's coming — get ready to run it down!");
         }
         if (c.goonsLeft <= 0) this.advance(game);
       } else if (c.def.id === 'm5' && c.step === 0) {
-        c.goonsLeft -= 1;
+        c.goonsLeft -= 1; // the casino guards, counted silently
       }
     },
     startSideJob(game) {

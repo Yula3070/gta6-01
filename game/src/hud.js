@@ -1,5 +1,4 @@
-// The HUD: DOM panels for health, money, wanted stars, clock and tide, a
-// canvas minimap, objective and dialogue boxes, and the title/pause/failed
+// The HUD: DOM panels, canvas minimap, dialogue, title/pause/failed
 // screens. Styled in style.css (dark glass, amber accent).
 import { ROADS } from './config.js';
 
@@ -29,7 +28,7 @@ export function createHud(game) {
       el('armor-fill').style.width = `${Math.max(0, p.armor)}%`;
       el('money').textContent = `$${Math.floor(p.money).toLocaleString('en-US')}`;
       el('shells').textContent = `🐚 ${game.stats.shells}/${game.shellTotal || 12}`;
-      // Stars.
+
       const stars = el('stars').children;
       for (let i = 0; i < stars.length; i += 1) {
         stars[i].classList.toggle('lit', i < police.stars);
@@ -40,18 +39,18 @@ export function createHud(game) {
       } else {
         el('stars').classList.remove('flash');
       }
-      // Clock: the game day runs DAY_LENGTH seconds.
+
       const mins = Math.floor((game.time.clock / 240) * 1440);
       const hh = String(Math.floor(mins / 60)).padStart(2, '0');
       const mm = String(mins % 60).padStart(2, '0');
       el('clock').textContent = `${hh}:${mm}`;
       el('daynight').textContent = game.time.nightFactor > 0.5 ? '🌙' : '☀️';
-      // Tide gauge.
+
       const level = game.tide.level;
       el('tide-fill').style.width = `${Math.round(level * 100)}%`;
       el('tide-label').textContent = level < 0.45 ? `LOW TIDE ${game.tide.toNext}` : `HIGH TIDE ${game.tide.toNext}`;
       el('tide-label').classList.toggle('low', level < 0.45);
-      // Speed and weapon.
+
       if (p.inCar) {
         el('speed').textContent = `${Math.round(Math.abs(p.inCar.speed) * 3.6)} km/h`;
         el('carname').textContent = p.inCar.type.toUpperCase();
@@ -62,14 +61,14 @@ export function createHud(game) {
       el('weapon-name').textContent = p.weapon === 'fists' ? 'FISTS' : 'P9 PISTOL';
       el('ammo').textContent = p.weapon === 'fists' ? '' : `${p.mag.pistol} / ${p.ammo.pistol}${p.reloading > 0 ? ' …' : ''}`;
       el('crosshair').style.display = p.weapon === 'pistol' && !p.inCar ? 'block' : 'none';
-      // Mission timer.
+
       const c = game.missions.current;
       const j = game.missions.sideJob;
       const r = game.missions.race;
       const t = c ? c.timer : j ? j.timer : r ? r.timer : 0;
       el('mission-timer').textContent = t > 0 ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '';
-      // Mission card: which job, which step, what next — only while a
-      // story mission runs, so free roam stays clean.
+      // Mission card: which job, which step — only while a story
+      // mission runs, so free roam stays clean.
       const mc = el('mission-card');
       if (c && c.def.steps[c.step]) {
         const idx = game.missions.list.indexOf(c.def) + 1;
@@ -79,7 +78,7 @@ export function createHud(game) {
       } else {
         mc.classList.add('hidden');
       }
-      // Dialogue typewriter.
+
       if (dialogueTimer > 0) {
         dialogueTimer -= dt;
         dialogueShown = Math.min(dialogueFull.length, dialogueShown + dt * 55);
@@ -90,7 +89,7 @@ export function createHud(game) {
         toastTimer -= dt;
         if (toastTimer <= 0) el('toast').classList.add('hidden');
       }
-      // Busted progress ring (a thin bar under the stars).
+
       el('busted-fill').style.width = `${Math.min(100, (police.bustedTimer / 2.5) * 100)}%`;
       this.drawMinimap(mctx);
     },
@@ -99,26 +98,26 @@ export function createHud(game) {
       const H = 200;
       ctx.fillStyle = '#0e1420';
       ctx.fillRect(0, 0, W, H);
-      // Water and sand.
+
       const waterY = worldToMap(0, 336).y;
       ctx.fillStyle = '#164e6b';
       ctx.fillRect(0, waterY, W, H - waterY);
       ctx.fillStyle = '#c9b183';
       ctx.fillRect(0, worldToMap(0, 294).y, W, waterY - worldToMap(0, 294).y);
-      // Island.
+
       const isl = worldToMap(0, 610);
       ctx.fillStyle = '#c9b183';
       ctx.beginPath();
       ctx.arc(isl.x, isl.y, 10, 0, Math.PI * 2);
       ctx.fill();
-      // Causeway.
+
       ctx.strokeStyle = '#b8b0a0';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(worldToMap(0, 294).x, worldToMap(0, 294).y);
       ctx.lineTo(isl.x, isl.y);
       ctx.stroke();
-      // Roads.
+
       ctx.strokeStyle = '#4a5058';
       ctx.lineWidth = 2;
       for (const r of ROADS) {
@@ -135,8 +134,7 @@ export function createHud(game) {
         ctx.lineTo(d.x, d.y);
         ctx.stroke();
       }
-      // Street race route: a dashed line from the player through the
-      // remaining checkpoints, so the route reads at a glance.
+      // Street race route: dashed line through the checkpoints.
       const race = game.missions.race;
       if (race) {
         const route = [{ x: game.player.pos.x, z: game.player.pos.z }, ...race.cps.slice(race.idx)];
@@ -159,7 +157,7 @@ export function createHud(game) {
           ctx.fill();
         }
       }
-      // Golden shells still to collect.
+
       for (const pk of game.pickups) {
         if (pk.type !== 'shell') continue;
         const s = worldToMap(pk.pos.x, pk.pos.z);
@@ -168,7 +166,7 @@ export function createHud(game) {
         ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
         ctx.fill();
       }
-      // Mission marker.
+
       const marker = game.missions.marker;
       if (marker) {
         const m = worldToMap(marker.x, marker.z);
@@ -181,7 +179,7 @@ export function createHud(game) {
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
-      // Traffic and police dots.
+
       for (const car of game.cars) {
         const m = worldToMap(car.pos.x, car.pos.z);
         ctx.fillStyle = car.isPolice ? '#ff4444' : '#dfe6ee';
@@ -189,7 +187,7 @@ export function createHud(game) {
         ctx.arc(m.x, m.y, car.isPolice ? 3.5 : 2, 0, Math.PI * 2);
         ctx.fill();
       }
-      // Player arrow.
+
       const p = game.player;
       const pm = worldToMap(p.pos.x, p.pos.z);
       const ang = p.inCar ? p.inCar.angle : p.angle;
@@ -205,7 +203,7 @@ export function createHud(game) {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-      // North tick.
+
       ctx.fillStyle = '#8b93a3';
       ctx.font = 'bold 11px system-ui, sans-serif';
       ctx.fillText('N', 8, 14);
@@ -226,7 +224,7 @@ export function createHud(game) {
       el('dialogue-text').textContent = '';
       el('dialogue').classList.remove('hidden');
     },
-    // Reveal the whole line at once (a staged screenshot must not catch the
+    // Reveal the whole line at once (staged shots must not catch the
     // typewriter mid-sentence).
     finishDialogue() {
       if (dialogueFull) {

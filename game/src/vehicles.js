@@ -1,6 +1,5 @@
-// Cars: boxy original models built from parts, arcade driving physics, and
-// the traffic that follows the city's road graph. Police cruisers are cars
-// too — police.js steers them.
+// Cars: boxy original models, arcade driving, and the traffic that
+// follows the road graph. Police cruisers are cars too.
 import * as THREE from 'three';
 import { CAR_TYPES } from './config.js';
 
@@ -25,7 +24,7 @@ export function buildCarMesh(type) {
   const hood = new THREE.Mesh(new THREE.BoxGeometry(spec.width - 0.1, 0.18, spec.length * 0.22), bodyMat);
   hood.position.set(0, 0.92, spec.length * 0.36);
   g.add(hood);
-  // Bumpers, headlights, taillights.
+
   const front = new THREE.Mesh(new THREE.BoxGeometry(spec.width, 0.22, 0.18), darkMat);
   front.position.set(0, 0.42, spec.length / 2);
   g.add(front);
@@ -41,13 +40,13 @@ export function buildCarMesh(type) {
   const tr = tl.clone();
   tr.position.x = spec.width / 2 - 0.35;
   g.add(hl, hr, tl, tr);
-  // Taxi sign.
+
   if (type === 'taxi') {
     const sign = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.4), lam(0xf2c200, 0xf2c200, 0.4));
     sign.position.set(0, 1.5, 0);
     g.add(sign);
   }
-  // Police light bar.
+
   let lightBar = null;
   if (type === 'police') {
     lightBar = new THREE.Group();
@@ -62,7 +61,7 @@ export function buildCarMesh(type) {
     stripe.position.y = 0.62;
     g.add(stripe);
   }
-  // Wheels: a group per wheel (steer) holding a cylinder (spin).
+
   const wheels = [];
   const steerWheels = [];
   const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, 0.3, 10);
@@ -157,13 +156,13 @@ export function driveCar(game, car, throttle, steerInput, dt) {
   car.pos.x += fx * car.speed * dt;
   car.pos.z += fz * car.speed * dt;
   car.mesh.rotation.y = car.angle;
-  // Wheels: spin and steer.
+
   for (const w of car.wheels) {
     w.tire.rotation.x += (car.speed / WHEEL_R) * dt;
     w.hub.rotation.x += (car.speed / WHEEL_R) * dt;
   }
   for (const p of car.steerWheels) p.rotation.y = car.steer;
-  // Damage smoke.
+
   car.smoke = Math.max(0, car.smoke - dt);
   if (car.health < 40 && Math.abs(car.speed) > 2 && Math.random() < dt * 8) {
     car.smoke = 0.4;
@@ -187,7 +186,7 @@ export function collideCircleAABB(x, z, r, box) {
     const d = Math.sqrt(d2);
     return { nx: dx / d, nz: dz / d, depth: r - d };
   }
-  // Centre inside the box: push out along the smallest penetration.
+
   const pl = x - box.x0;
   const pr = box.x1 - x;
   const pt = z - box.z0;
@@ -223,7 +222,7 @@ export function collideCars(game, dt) {
         car.speed *= 0.92;
       }
     }
-    // Island rim: stay on the sand.
+
     if (car.pos.z > 540) {
       const dx = car.pos.x - 0;
       const dz = car.pos.z - 610;
