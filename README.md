@@ -12,7 +12,7 @@ files — no network request, no build step.
 
 **Solara Bay** is a sun-soaked coastal city. You are **Nia Reyes**, an
 ex-stunt driver turned courier, pulled into one last job by her old crew.
-Five story missions take her from a lunch delivery to the casino heist of the
+Six story missions take her from a lunch delivery to the casino heist of the
 year — and the only clean getaway is **the Tide Run**: a causeway across the
 bay that is only drivable at low tide. Police cruisers will not follow you
 across the sandbar.
@@ -53,10 +53,13 @@ Open http://localhost:8080 in desktop Chrome. Keyboard + mouse, offline.
 - **Wanted level and police**: 0–5 stars; cruisers chase and ram, foot cops
   close in; get busted standing still. Heat decays out of sight — or across
   the causeway at low tide.
-- **Missions and story**: five missions with dialogue, objectives, timers
+- **Missions and story**: six missions with dialogue, objectives, timers
   and rewards, then endless courier side jobs — plus a street race at the
   casino strip (three checkpoints, $300) and 12 golden shells to collect
   (HUD counter, minimap dots, $100 bonus for all twelve).
+- **Roadblocks**: at four wanted stars the PD seals the avenue — two
+  cruisers and a striped barrier; smash through and pay in car health, or
+  swerve around.
 - **Combat**: fists and a pistol, goons who shoot back (a tough bruiser, a
   fast runner, and regulars), health/armor/ammo pickups, golden shells hidden
   on the beach and island.
